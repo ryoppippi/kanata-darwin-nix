@@ -1,84 +1,121 @@
 # Kanata Overlay
 
-This repository provides a Nix flake overlay for [Kanata](https://github.com/jtroo/kanata), a cross-platform keyboard remapper.
+This repository provides a Nix flake overlay for [Kanata](https://github.com/jtroo/kanata) and related tools for macOS keyboard remapping.
 
 ## Repository Structure
 
 ```
 kanata-overlay/
-├── flake.nix          # Main flake with overlay export
-├── flake.lock         # Locked dependencies
-├── default.nix        # Package wrapper
-├── package.nix        # Core package definition
-├── sources.json       # Binary version and hashes
-├── update.ts          # Update script (Bun/TypeScript)
+├── flake.nix              # Main flake with overlay and darwinModules
+├── flake.lock             # Locked dependencies
+├── packages/
+│   ├── kanata/
+│   │   ├── default.nix    # Package wrapper
+│   │   ├── package.nix    # Core package definition
+│   │   └── sources.json   # Version and hashes
+│   ├── kanata-vk-agent/
+│   │   ├── default.nix
+│   │   ├── package.nix
+│   │   └── sources.json
+│   └── karabiner-driverkit/
+│       ├── default.nix
+│       ├── package.nix
+│       └── sources.json
+├── modules/
+│   └── darwin/
+│       └── default.nix    # nix-darwin module for service management
+├── update.ts              # Update script (Bun/TypeScript with Nix shebang)
 ├── dev/
-│   └── flake.nix      # Development tools (formatters, linters)
+│   └── flake.nix          # Development tools (formatters, linters)
 ├── .github/
 │   ├── workflows/
-│   │   ├── update.yaml  # Automated updates (every 6 hours)
-│   │   └── check.yaml   # CI validation
+│   │   ├── update.yaml    # Automated updates (daily)
+│   │   └── check.yaml     # CI validation
 │   └── actions/
-│       └── setup-nix/   # Reusable Nix setup action
-├── README.md          # User documentation
-├── CLAUDE.md          # This file
-└── LICENSE            # MIT licence
+│       └── setup-nix/     # Reusable Nix setup action
+├── README.md              # User documentation
+├── CLAUDE.md              # This file
+└── LICENSE                # MIT licence
 ```
 
-## Key Files
+## Packages
 
-### sources.json
+### kanata
 
-Contains the current version and platform-specific download URLs with SRI hashes:
+Downloads pre-built binaries from [jtroo/kanata](https://github.com/jtroo/kanata) releases.
 
-```json
-{
-  "version": "1.10.1",
-  "platforms": {
-    "x86_64-linux": { "url": "...", "hash": "sha256-..." },
-    "x86_64-darwin": { "url": "...", "hash": "sha256-..." },
-    "aarch64-darwin": { "url": "...", "hash": "sha256-..." }
-  }
-}
+- **Platforms**: x86_64-linux, x86_64-darwin, aarch64-darwin
+- **macOS variant**: Uses `cmd_allowed` binary (required for command key remapping)
+- **sources.json** contains platform-specific URLs and SRI hashes
+
+### kanata-vk-agent
+
+Downloads pre-built binaries from [devsunb/kanata-vk-agent](https://github.com/devsunb/kanata-vk-agent) releases.
+
+- **Platforms**: macOS only (x86_64-darwin, aarch64-darwin)
+- **Purpose**: Enables app-specific key mappings via bundle ID blacklist
+
+### karabiner-driverkit
+
+Downloads `.pkg` installer from [pqrs-org/Karabiner-DriverKit-VirtualHIDDevice](https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice) releases.
+
+- **Platforms**: macOS only (x86_64-darwin, aarch64-darwin)
+- **Purpose**: Virtual HID device driver required for Kanata on macOS
+
+## nix-darwin Module
+
+Located at `modules/darwin/default.nix`. Provides `services.kanata` options:
+
+### What It Does
+
+1. **Installs Karabiner-DriverKit** via activation script (only if not already installed)
+2. **Activates the driver** via Karabiner-VirtualHIDDevice-Manager
+3. **Creates symlinks** in `/Applications` for Input Monitoring permissions
+4. **Configures launchd daemons** for each keyboard configuration
+5. **Configures launchd agents** for kanata-vk-agent (optional per keyboard)
+
+### Key Implementation Details
+
+- Kanata runs as a **system daemon** (`launchd.daemons`)
+- kanata-vk-agent runs as a **user agent** (`launchd.agents`)
+- Uses `/Applications/kanata` symlink for Input Monitoring permission persistence
+- Logs stored at `/var/log/kanata-*.log` (daemon) and `/tmp/kanata-vk-agent-*.log` (agent)
+
+## update.ts
+
+TypeScript script with Nix shebang that updates all three packages:
+
+```typescript
+#!/usr/bin/env nix
+/*
+#! nix shell --inputs-from . nixpkgs#bun nixpkgs#oxfmt -c bun
+*/
 ```
 
-### package.nix
+### Update Process
 
-Defines how the Kanata binary is fetched and installed:
+1. Fetches latest release from GitHub API for each repo
+2. For kanata: Downloads `sha256sums` file and converts to SRI format
+3. For kanata-vk-agent and karabiner-driverkit: Uses `nix-prefetch-url` to get hashes
+4. Updates respective `sources.json` files
 
-- Downloads zip from GitHub releases
-- Extracts the appropriate binary for the platform
-- Uses `cmd_allowed` variant on macOS (required for Input Monitoring permission)
-- Platform-specific binary names:
-  - `x86_64-linux`: `kanata`
-  - `x86_64-darwin`: `kanata_macos_cmd_allowed`
-  - `aarch64-darwin`: `kanata_macos_cmd_allowed_arm64`
-
-### update.ts
-
-TypeScript script that:
-
-1. Fetches latest release from GitHub API
-2. Downloads `sha256sums` file from the release
-3. Converts hex hashes to SRI format using `nix hash convert`
-4. Updates `sources.json`
-
-Run with: `bun ./update.ts`
+Run with: `./update.ts` or `bun ./update.ts`
 
 ## Common Tasks
 
-### Building
+### Building Packages
 
 ```bash
-nix build
-./result/bin/kanata --version
+nix build .#kanata
+nix build .#kanata-vk-agent
+nix build .#karabiner-driverkit
 ```
 
-### Updating to Latest Version
+### Updating to Latest Versions
 
 ```bash
-bun ./update.ts
-nix build  # Verify it builds
+./update.ts
+nix build  # Verify all packages build
 ```
 
 ### Formatting
@@ -95,20 +132,23 @@ cd dev && nix flake check -L
 
 ## Supported Platforms
 
-- `x86_64-linux`
-- `x86_64-darwin` (Intel Mac)
-- `aarch64-darwin` (Apple Silicon)
+| Package             | x86_64-linux | x86_64-darwin | aarch64-darwin |
+| ------------------- | ------------ | ------------- | -------------- |
+| kanata              | ✓            | ✓             | ✓              |
+| kanata-vk-agent     | ✗            | ✓             | ✓              |
+| karabiner-driverkit | ✗            | ✓             | ✓              |
 
-Note: `aarch64-linux` is not included because Kanata does not provide official binaries for that platform.
+Note: `aarch64-linux` is not supported because Kanata does not provide official binaries for that platform.
 
 ## GitHub Actions
 
-- **update.yaml**: Runs daily to check for new Kanata releases
+- **update.yaml**: Runs daily to check for new releases of all packages
 - **check.yaml**: Runs on PRs and pushes to validate formatting and build
 
 ## Notes for Development
 
-- The main flake has minimal dependencies (only nixpkgs) to keep consumer lock files clean
+- The main flake has minimal dependencies (only nixpkgs)
 - Development tools are in `dev/flake.nix` to avoid polluting the main flake
 - On macOS, Kanata requires the Karabiner-DriverKit VirtualHIDDevice driver
-- The `cmd_allowed` binary variant is used on macOS to support command key remapping
+- The nix-darwin module handles driver installation automatically
+- Input Monitoring permission must be granted manually via System Settings

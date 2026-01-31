@@ -1,6 +1,6 @@
 # Kanata Overlay
 
-A Nix flake overlay that provides pre-built [Kanata](https://github.com/jtroo/kanata) binaries from official GitHub releases.
+A Nix flake overlay that provides pre-built [Kanata](https://github.com/jtroo/kanata) binaries and related tools from official GitHub releases.
 
 Kanata is a cross-platform software keyboard remapper that improves keyboard comfort and usability with advanced customisation.
 
@@ -12,6 +12,9 @@ Kanata is a cross-platform software keyboard remapper that improves keyboard com
 - SHA256 checksum verification
 - Flake and non-flake support
 - Binary cache via [Cachix](https://app.cachix.org/cache/ryoppippi) for faster builds
+- **nix-darwin module** for automatic service management on macOS
+- **kanata-vk-agent** for app-specific key mappings (macOS)
+- **Karabiner-DriverKit** virtual HID device driver (macOS)
 
 ## Why Use This Overlay?
 
@@ -136,7 +139,7 @@ Then use `pkgs.kanata` in your configuration after adding the overlay to your `p
 }
 ```
 
-#### Add to nix-darwin
+#### Add to nix-darwin (Simple)
 
 ```nix
 {
@@ -159,6 +162,78 @@ Then use `pkgs.kanata` in your configuration after adding the overlay to your `p
   };
 }
 ```
+
+#### Add to nix-darwin (With Service Module)
+
+This overlay provides a nix-darwin module that automatically manages Kanata as a launchd service. It handles:
+
+- Installing the Karabiner-DriverKit virtual HID device driver
+- Creating symlinks in `/Applications` for Input Monitoring permissions
+- Running Kanata as a launchd daemon
+- Optionally running kanata-vk-agent for app-specific key mappings
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nix-darwin.url = "github:LnL7/nix-darwin";
+    kanata-overlay.url = "github:ryoppippi/kanata-overlay";
+  };
+
+  outputs = { nixpkgs, nix-darwin, kanata-overlay, ... }: {
+    darwinConfigurations.yourhostname = nix-darwin.lib.darwinSystem {
+      system = "aarch64-darwin";
+      modules = [
+        kanata-overlay.darwinModules.default
+        ({ pkgs, ... }: {
+          nixpkgs.overlays = [ kanata-overlay.overlays.default ];
+
+          services.kanata = {
+            enable = true;
+            keyboards = {
+              default = {
+                configFile = ./kanata.kbd;
+                port = 5829;
+                vkAgent = {
+                  enable = true;
+                  blacklist = [
+                    "com.hnc.Discord"
+                    "com.openai.chat"
+                  ];
+                };
+              };
+            };
+          };
+        })
+      ];
+    };
+  };
+}
+```
+
+##### Service Module Options
+
+| Option                                               | Type    | Description                         |
+| ---------------------------------------------------- | ------- | ----------------------------------- |
+| `services.kanata.enable`                             | bool    | Enable Kanata service               |
+| `services.kanata.package`                            | package | Kanata package to use               |
+| `services.kanata.vkAgentPackage`                     | package | kanata-vk-agent package             |
+| `services.kanata.karabinerDriverKitPackage`          | package | Karabiner-DriverKit package         |
+| `services.kanata.keyboards`                          | attrsOf | Keyboard configurations             |
+| `services.kanata.keyboards.<name>.configFile`        | path    | Path to `.kbd` config file          |
+| `services.kanata.keyboards.<name>.port`              | port    | TCP port for kanata                 |
+| `services.kanata.keyboards.<name>.extraArgs`         | list    | Extra arguments for kanata          |
+| `services.kanata.keyboards.<name>.vkAgent.enable`    | bool    | Enable vk-agent for this keyboard   |
+| `services.kanata.keyboards.<name>.vkAgent.blacklist` | list    | Bundle IDs to exclude from vk-agent |
+| `services.kanata.keyboards.<name>.vkAgent.extraArgs` | list    | Extra arguments for vk-agent        |
+
+##### macOS Permissions
+
+After enabling the service, you need to grant Input Monitoring permission:
+
+1. Open **System Settings** > **Privacy & Security** > **Input Monitoring**
+2. Add `/Applications/kanata`
+3. If using vk-agent, also add `/Applications/kanata-vk-agent`
 
 #### Add to devShell
 
@@ -267,12 +342,21 @@ in
 
 ## Available Packages
 
-When using the overlay, the package is available as `pkgs.kanata`.
+| Package               | Platforms    | Description                                   |
+| --------------------- | ------------ | --------------------------------------------- |
+| `kanata`              | Linux, macOS | Kanata keyboard remapper                      |
+| `kanata-vk-agent`     | macOS only   | Virtual key agent for app-specific mappings   |
+| `karabiner-driverkit` | macOS only   | Karabiner-DriverKit virtual HID device driver |
+
+When using the overlay, packages are available as `pkgs.kanata`, `pkgs.kanata-vk-agent`, and `pkgs.karabiner-driverkit`.
 
 ## How It Works
 
-1. The `update.ts` script fetches the latest release from GitHub API
-2. It retrieves official SHA256 checksums from the `sha256sums` file and converts them to SRI format
+1. The `update.ts` script fetches the latest releases from GitHub API for all packages:
+   - **kanata**: from [jtroo/kanata](https://github.com/jtroo/kanata)
+   - **kanata-vk-agent**: from [devsunb/kanata-vk-agent](https://github.com/devsunb/kanata-vk-agent)
+   - **karabiner-driverkit**: from [pqrs-org/Karabiner-DriverKit-VirtualHIDDevice](https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice)
+2. It retrieves official SHA256 checksums and converts them to SRI format
 3. GitHub Actions runs the update script daily and commits any changes
 4. The flake provides pre-built binaries for all supported platforms
 
@@ -336,11 +420,15 @@ nix flake check ./dev
 ## Related Projects
 
 - [kanata](https://github.com/jtroo/kanata) - Official Kanata repository
+- [kanata-vk-agent](https://github.com/devsunb/kanata-vk-agent) - Virtual key agent for app-specific mappings
+- [Karabiner-DriverKit-VirtualHIDDevice](https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice) - Virtual HID device driver for macOS
 - [nixpkgs kanata](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/by-name/ka/kanata/package.nix) - Official nixpkgs package for Kanata
 
 ## Credits
 
 - Kanata by [jtroo](https://github.com/jtroo)
+- kanata-vk-agent by [devsunb](https://github.com/devsunb)
+- Karabiner-DriverKit by [pqrs-org](https://github.com/pqrs-org)
 
 ## Licence
 
