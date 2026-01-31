@@ -1,6 +1,6 @@
 # Kanata Darwin Nix
 
-A Nix flake that provides [Kanata](https://github.com/jtroo/kanata) pre-built binaries, related tools, and a nix-darwin module for macOS.
+An opinionated Nix flake that provides [Kanata](https://github.com/jtroo/kanata) pre-built binaries, related tools, and a nix-darwin module for macOS.
 
 Kanata is a cross-platform software keyboard remapper that improves keyboard comfort and usability with advanced customisation.
 
@@ -17,24 +17,32 @@ Kanata is a cross-platform software keyboard remapper that improves keyboard com
 - **kanata-vk-agent** for app-specific key mappings
 - **Karabiner-DriverKit** virtual HID device driver
 
-## Why Use This Overlay?
+## Why Use This Instead of nixpkgs?
 
-While Kanata is available in nixpkgs, this overlay provides several advantages:
+While Kanata is available in nixpkgs, this flake provides several advantages for macOS users:
 
-### Faster Updates
+### ⚡ Zero Build Time
 
-- **Automated updates**: GitHub Actions checks for new releases daily
-- **Latest binaries**: Get new releases quickly without waiting for nixpkgs updates
+- **Pre-built binaries**: Downloads official binaries directly - no Rust compilation needed
+- **Instant installation**: Skip the lengthy cargo build process entirely
+- **Identical to official releases**: Same binaries the Kanata maintainers ship
 
-### Pre-built Binaries
+### 🚀 Always Up-to-Date
 
-- **No compilation**: Downloads pre-built binaries directly from official releases
-- **Faster installation**: No need to compile Rust code locally
-- **Consistent behaviour**: Same binaries as official releases
+- **Daily automated updates**: GitHub Actions checks for new releases every day
+- **No waiting for nixpkgs**: Get new Kanata versions immediately, not weeks later
+- **Automatic hash verification**: SHA256 checksums fetched directly from releases
 
-### Simplified Setup
+### 🍎 macOS-Specific Goodies
 
-- **Easy integration**: Simple overlay that works with any Nix setup
+- **nix-darwin module**: Automatic launchd service management out of the box
+- **kanata-vk-agent**: App-specific key mappings (not in nixpkgs!)
+- **Karabiner-DriverKit**: Virtual HID driver installation handled automatically
+- **Input Monitoring**: Symlinks in `/Applications` for persistent permissions
+
+### 🎯 Simple Integration
+
+- **One flake, everything included**: Kanata + vk-agent + driver + service module
 - **Minimal dependencies**: Only requires nixpkgs
 
 ## Binary Cache (Cachix)
