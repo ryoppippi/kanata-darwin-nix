@@ -8,12 +8,12 @@ runs:
   using: "composite"
   steps:
     - name: Install Nix
-      uses: cachix/install-nix-action@v31
+      uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15 # v31.9.0
       with:
         github_access_token: ${{ github.token }}
 
     - name: Setup Cachix (ryoppippi)
-      uses: cachix/cachix-action@v16
+      uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
       with:
         name: ryoppippi
         authToken: ${{ inputs.cachix-auth-token }}
