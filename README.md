@@ -38,7 +38,7 @@ While Kanata is available in nixpkgs, this flake provides several advantages for
 - **nix-darwin module**: Automatic launchd service management out of the box
 - **kanata-vk-agent**: App-specific key mappings (not in nixpkgs!)
 - **Karabiner-DriverKit**: Virtual HID driver installation handled automatically
-- **Input Monitoring**: Wrapper scripts in `/Applications` for persistent permissions
+- **Input Monitoring**: Symlinks in `/Applications` for permissions management
 
 ### 🎯 Simple Integration
 
@@ -64,12 +64,12 @@ Add to your Nix configuration:
 ```nix
 # NixOS (configuration.nix)
 nix.settings = {
-  substituters = [ "https://ryoppippi.cachix.org" ];
+  substitutes = [ "https://ryoppippi.cachix.org" ];
   trusted-public-keys = [ "ryoppippi.cachix.org-1:b2LbtWNvJeL/qb1B6TYOMK+apaCps4SCbzlPRfSQIms=" ];
 };
 
 # Or in ~/.config/nix/nix.conf
-# extra-substituters = https://ryoppippi.cachix.org
+# extra-substitutes = https://ryoppippi.cachix.org
 # extra-trusted-public-keys = ryoppippi.cachix.org-1:b2LbtWNvJeL/qb1B6TYOMK+apaCps4SCbzlPRfSQIms=
 ```
 
@@ -78,7 +78,7 @@ nix.settings = {
 ```nix
 {
   nixConfig = {
-    extra-substituters = [ "https://ryoppippi.cachix.org" ];
+    extra-substitutes = [ "https://ryoppippi.cachix.org" ];
     extra-trusted-public-keys = [ "ryoppippi.cachix.org-1:b2LbtWNvJeL/qb1B6TYOMK+apaCps4SCbzlPRfSQIms=" ];
   };
 
@@ -154,7 +154,7 @@ Then use `pkgs.kanata` in your configuration after adding the overlay to your `p
 This overlay provides a nix-darwin module that automatically manages Kanata as a launchd service. It handles:
 
 - Installing the Karabiner-DriverKit virtual HID device driver
-- Creating wrapper scripts in `/Applications` for Input Monitoring permissions
+- Creating symlinks in `/Applications` for Input Monitoring permissions
 - Running Kanata as a launchd daemon
 - Optionally running kanata-vk-agent for app-specific key mappings
 
@@ -245,6 +245,8 @@ After enabling the service, you need to grant Input Monitoring permission:
 1. Open **System Settings** > **Privacy & Security** > **Input Monitoring**
 2. Add `/Applications/kanata`
 3. If using vk-agent, also add `/Applications/kanata-vk-agent`
+
+> **Note**: When kanata is updated, the nix store path changes and the symlink target changes. You may need to remove and re-add `/Applications/kanata` in Input Monitoring settings after updates.
 
 #### Add to devShell
 
