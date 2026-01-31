@@ -3,6 +3,9 @@ on:
   schedule:
     - cron: "0 0 * * *" # Run daily at midnight UTC
   workflow_dispatch:
+  push:
+    branches:
+      - main
 jobs:
   update-sources:
     runs-on: ubuntu-24.04-arm
@@ -13,8 +16,6 @@ jobs:
       - uses: ./.github/actions/setup-nix
         with:
           cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      - name: Install Bun
-        run: nix profile install nixpkgs#bun
       - run: ./update.ts
       - run: "git config user.email 41898282+github-actions[bot]@users.noreply.github.com"
       - run: "git config user.name github-actions[bot]"
