@@ -36,6 +36,7 @@
               nixfmt.enable = true;
               deadnix.enable = true;
               statix.enable = true;
+              typos.enable = true;
             };
             settings.formatter.oxfmt = {
               command = "${pkgs.oxfmt}/bin/oxfmt";
@@ -67,6 +68,8 @@
             packages = [
               treefmtEval.config.build.wrapper
               pkgs.bun
+              pkgs.typos
+              pkgs.typos-lsp
             ];
 
             shellHook = ''
