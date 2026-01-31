@@ -65,14 +65,14 @@ async function getCurrentVersion(): Promise<string | null> {
 
 async function updateSourcesJSON(
   version: string,
-  hashes: Record<NixPlatform, string>
+  hashes: Record<NixPlatform, string>,
 ): Promise<void> {
   const sourcesPath = join(import.meta.dir, "sources.json");
 
-  const platformsData: Record<
+  const platformsData: Record<NixPlatform, { url: string; hash: string }> = {} as Record<
     NixPlatform,
     { url: string; hash: string }
-  > = {} as Record<NixPlatform, { url: string; hash: string }>;
+  >;
 
   for (const nixPlatform of Object.keys(platforms) as NixPlatform[]) {
     const filename = platforms[nixPlatform].replace("VERSION", `v${version}`);
@@ -109,10 +109,7 @@ const checksums = await fetchSha256sums(latestVersion);
 const hashes: Record<NixPlatform, string> = {} as Record<NixPlatform, string>;
 
 for (const nixPlatform of Object.keys(platforms) as NixPlatform[]) {
-  const filename = platforms[nixPlatform].replace(
-    "VERSION",
-    `v${latestVersion}`
-  );
+  const filename = platforms[nixPlatform].replace("VERSION", `v${latestVersion}`);
   const checksum = checksums.get(filename);
   if (!checksum) {
     console.error(`Checksum not found for ${filename}`);

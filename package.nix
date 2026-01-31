@@ -12,7 +12,7 @@ let
 
   source =
     sources.${stdenv.hostPlatform.system}
-    or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
+      or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
 
   binaryName =
     {
