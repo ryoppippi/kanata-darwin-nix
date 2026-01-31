@@ -1,73 +1,90 @@
-#!/usr/bin/env bun
+#!/usr/bin/env nix
+/*
+#! nix shell --inputs-from . nixpkgs#bun nixpkgs#oxfmt -c bun
+*/
 
 /**
- * Update script for kanata package.
+ * Update script for kanata-overlay packages.
  *
- * Fetches the latest version from GitHub releases and retrieves
- * platform-specific checksums from sha256sums file.
+ * Updates:
+ * - kanata: from jtroo/kanata releases
+ * - kanata-vk-agent: from devsunb/kanata-vk-agent releases
+ * - karabiner-driverkit: from pqrs-org/Karabiner-DriverKit-VirtualHIDDevice releases
  */
 
 import { $ } from "bun";
 import { join } from "node:path";
-
-const REPO = "jtroo/kanata";
-
-const platforms = {
-  "x86_64-linux": "kanata-linux-binaries-VERSION-x64.zip",
-  "x86_64-darwin": "kanata-macos-binaries-x64-VERSION.zip",
-  "aarch64-darwin": "kanata-macos-binaries-arm64-VERSION.zip",
-} as const;
-
-type NixPlatform = keyof typeof platforms;
-
-interface SourcesJSON {
-  version: string;
-  platforms: Record<NixPlatform, { url: string; hash: string }>;
-}
-
-async function fetchLatestVersion(): Promise<string> {
-  const url = `https://api.github.com/repos/${REPO}/releases/latest`;
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github.v3+json",
-      "User-Agent": "kanata-overlay-update-script",
-    },
-  });
-  const json = (await response.json()) as { tag_name: string };
-  return json.tag_name.replace(/^v/, "");
-}
-
-async function fetchSha256sums(version: string): Promise<Map<string, string>> {
-  const url = `https://github.com/${REPO}/releases/download/v${version}/sha256sums`;
-  const response = await fetch(url);
-  const text = await response.text();
-
-  const checksums = new Map<string, string>();
-  for (const line of text.trim().split("\n")) {
-    const [hash, filename] = line.trim().split(/\s+/);
-    if (hash && filename) {
-      checksums.set(filename, hash);
-    }
-  }
-  return checksums;
-}
 
 async function sha256ToSri(sha256Hex: string): Promise<string> {
   const result = await $`nix hash convert --hash-algo sha256 ${sha256Hex}`.text();
   return result.trim();
 }
 
-async function getCurrentVersion(): Promise<string | null> {
-  const sourcesPath = join(import.meta.dir, "sources.json");
-  const sources: SourcesJSON = await Bun.file(sourcesPath).json();
-  return sources.version;
+async function fetchLatestRelease(
+  repo: string,
+): Promise<{ tag: string; assets: { name: string; url: string }[] }> {
+  const url = `https://api.github.com/repos/${repo}/releases/latest`;
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "kanata-overlay-update-script",
+    },
+  });
+  const json = (await response.json()) as {
+    tag_name: string;
+    assets: { name: string; browser_download_url: string }[];
+  };
+  return {
+    tag: json.tag_name.replace(/^v/, ""),
+    assets: json.assets.map((a) => ({ name: a.name, url: a.browser_download_url })),
+  };
 }
 
-async function updateSourcesJSON(
-  version: string,
-  hashes: Record<NixPlatform, string>,
-): Promise<void> {
-  const sourcesPath = join(import.meta.dir, "sources.json");
+async function prefetchUrl(url: string): Promise<string> {
+  const result = await $`nix-prefetch-url --type sha256 ${url}`.text();
+  return sha256ToSri(result.trim());
+}
+
+// ============== Kanata ==============
+async function updateKanata() {
+  const REPO = "jtroo/kanata";
+  const platforms = {
+    "x86_64-linux": "kanata-linux-binaries-VERSION-x64.zip",
+    "x86_64-darwin": "kanata-macos-binaries-x64-VERSION.zip",
+    "aarch64-darwin": "kanata-macos-binaries-arm64-VERSION.zip",
+  } as const;
+
+  type NixPlatform = keyof typeof platforms;
+
+  interface SourcesJSON {
+    version: string;
+    platforms: Record<NixPlatform, { url: string; hash: string }>;
+  }
+
+  const sourcesPath = join(import.meta.dir, "packages/kanata/sources.json");
+  const current: SourcesJSON = await Bun.file(sourcesPath).json();
+
+  const release = await fetchLatestRelease(REPO);
+  const latestVersion = release.tag;
+
+  console.log(`[kanata] Current: ${current.version}, Latest: ${latestVersion}`);
+
+  if (current.version === latestVersion) {
+    console.log("[kanata] Already up to date!");
+    return;
+  }
+
+  console.log(`[kanata] Updating to ${latestVersion}...`);
+
+  // Fetch sha256sums
+  const sha256sumsUrl = `https://github.com/${REPO}/releases/download/v${latestVersion}/sha256sums`;
+  const sha256sumsResponse = await fetch(sha256sumsUrl);
+  const sha256sumsText = await sha256sumsResponse.text();
+  const checksums = new Map<string, string>();
+  for (const line of sha256sumsText.trim().split("\n")) {
+    const [hash, filename] = line.trim().split(/\s+/);
+    if (hash && filename) checksums.set(filename, hash);
+  }
 
   const platformsData: Record<NixPlatform, { url: string; hash: string }> = {} as Record<
     NixPlatform,
@@ -75,54 +92,127 @@ async function updateSourcesJSON(
   >;
 
   for (const nixPlatform of Object.keys(platforms) as NixPlatform[]) {
-    const filename = platforms[nixPlatform].replace("VERSION", `v${version}`);
-    const url = `https://github.com/${REPO}/releases/download/v${version}/${filename}`;
-    platformsData[nixPlatform] = {
-      url,
-      hash: hashes[nixPlatform],
-    };
+    const filename = platforms[nixPlatform].replace("VERSION", `v${latestVersion}`);
+    const checksum = checksums.get(filename);
+    if (!checksum) {
+      console.error(`[kanata] Checksum not found for ${filename}`);
+      process.exit(1);
+    }
+    const sriHash = await sha256ToSri(checksum);
+    const url = `https://github.com/${REPO}/releases/download/v${latestVersion}/${filename}`;
+    platformsData[nixPlatform] = { url, hash: sriHash };
+    console.log(`  ${nixPlatform}: ${sriHash}`);
   }
 
-  const sourcesData: SourcesJSON = {
-    version,
-    platforms: platformsData,
-  };
-
+  const sourcesData: SourcesJSON = { version: latestVersion, platforms: platformsData };
   await Bun.write(sourcesPath, JSON.stringify(sourcesData, null, 2) + "\n");
+  console.log(`[kanata] Updated to ${latestVersion}`);
 }
 
-const currentVersion = await getCurrentVersion();
-const latestVersion = await fetchLatestVersion();
+// ============== Kanata VK Agent ==============
+async function updateKanataVkAgent() {
+  const REPO = "devsunb/kanata-vk-agent";
+  const platforms = {
+    "x86_64-darwin": "kanata-vk-agent_x86_64.tar.gz",
+    "aarch64-darwin": "kanata-vk-agent_aarch64.tar.gz",
+  } as const;
 
-console.log(`Current version: ${currentVersion}`);
-console.log(`Latest version: ${latestVersion}`);
+  type NixPlatform = keyof typeof platforms;
 
-if (currentVersion === latestVersion) {
-  console.log("Already up to date!");
-  process.exit(0);
+  interface SourcesJSON {
+    version: string;
+    platforms: Record<NixPlatform, { url: string; hash: string }>;
+  }
+
+  const sourcesPath = join(import.meta.dir, "packages/kanata-vk-agent/sources.json");
+  const current: SourcesJSON = await Bun.file(sourcesPath).json();
+
+  const release = await fetchLatestRelease(REPO);
+  const latestVersion = release.tag;
+
+  console.log(`[kanata-vk-agent] Current: ${current.version}, Latest: ${latestVersion}`);
+
+  if (current.version === latestVersion) {
+    console.log("[kanata-vk-agent] Already up to date!");
+    return;
+  }
+
+  console.log(`[kanata-vk-agent] Updating to ${latestVersion}...`);
+
+  const platformsData: Record<NixPlatform, { url: string; hash: string }> = {} as Record<
+    NixPlatform,
+    { url: string; hash: string }
+  >;
+
+  for (const nixPlatform of Object.keys(platforms) as NixPlatform[]) {
+    const filename = platforms[nixPlatform];
+    const url = `https://github.com/${REPO}/releases/download/v${latestVersion}/${filename}`;
+    const hash = await prefetchUrl(url);
+    platformsData[nixPlatform] = { url, hash };
+    console.log(`  ${nixPlatform}: ${hash}`);
+  }
+
+  const sourcesData: SourcesJSON = { version: latestVersion, platforms: platformsData };
+  await Bun.write(sourcesPath, JSON.stringify(sourcesData, null, 2) + "\n");
+  console.log(`[kanata-vk-agent] Updated to ${latestVersion}`);
 }
 
-console.log(`Updating kanata from ${currentVersion} to ${latestVersion}`);
+// ============== Karabiner DriverKit ==============
+async function updateKarabinerDriverKit() {
+  const REPO = "pqrs-org/Karabiner-DriverKit-VirtualHIDDevice";
 
-console.log("Fetching sha256sums...");
-const checksums = await fetchSha256sums(latestVersion);
-const hashes: Record<NixPlatform, string> = {} as Record<NixPlatform, string>;
+  interface SourcesJSON {
+    version: string;
+    url: string;
+    hash: string;
+  }
 
-for (const nixPlatform of Object.keys(platforms) as NixPlatform[]) {
-  const filename = platforms[nixPlatform].replace("VERSION", `v${latestVersion}`);
-  const checksum = checksums.get(filename);
-  if (!checksum) {
-    console.error(`Checksum not found for ${filename}`);
+  const sourcesPath = join(import.meta.dir, "packages/karabiner-driverkit/sources.json");
+  const current: SourcesJSON = await Bun.file(sourcesPath).json();
+
+  const release = await fetchLatestRelease(REPO);
+  const latestVersion = release.tag;
+
+  console.log(`[karabiner-driverkit] Current: ${current.version}, Latest: ${latestVersion}`);
+
+  if (current.version === latestVersion) {
+    console.log("[karabiner-driverkit] Already up to date!");
+    return;
+  }
+
+  console.log(`[karabiner-driverkit] Updating to ${latestVersion}...`);
+
+  const pkgAsset = release.assets.find((a) => a.name.endsWith(".pkg"));
+  if (!pkgAsset) {
+    console.error("[karabiner-driverkit] No .pkg asset found");
     process.exit(1);
   }
-  const sriHash = await sha256ToSri(checksum);
-  hashes[nixPlatform] = sriHash;
-  console.log(`  ${nixPlatform}: ${sriHash}`);
+
+  const hash = await prefetchUrl(pkgAsset.url);
+  console.log(`  hash: ${hash}`);
+
+  const sourcesData: SourcesJSON = {
+    version: latestVersion,
+    url: pkgAsset.url,
+    hash,
+  };
+  await Bun.write(sourcesPath, JSON.stringify(sourcesData, null, 2) + "\n");
+  console.log(`[karabiner-driverkit] Updated to ${latestVersion}`);
 }
 
+// ============== Main ==============
+console.log("Updating kanata-overlay packages...\n");
+
+await updateKanata();
 console.log();
 
-await updateSourcesJSON(latestVersion, hashes);
-console.log(`Updated kanata to version ${latestVersion}`);
+await updateKanataVkAgent();
+console.log();
+
+await updateKarabinerDriverKit();
+console.log();
+
+console.log("Formatting with oxfmt...");
+await $`oxfmt packages/kanata/sources.json packages/kanata-vk-agent/sources.json packages/karabiner-driverkit/sources.json`.quiet();
 
 console.log("Done!");
