@@ -41,10 +41,5 @@
         default = self.darwinModules.kanata;
         kanata = ./modules/darwin;
       };
-
-      homeManagerModules = {
-        default = self.homeManagerModules.kanata;
-        kanata = ./modules/home-manager;
-      };
     };
 }

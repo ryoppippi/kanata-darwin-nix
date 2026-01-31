@@ -61,6 +61,14 @@ let
       };
     };
   };
+
+  kanataWrapper = pkgs.writeShellScript "kanata" ''
+    exec ${cfg.package}/bin/kanata "$@"
+  '';
+
+  vkAgentWrapper = pkgs.writeShellScript "kanata-vk-agent" ''
+    exec ${cfg.vkAgentPackage}/bin/kanata-vk-agent "$@"
+  '';
 in
 {
   options.services.kanata = {
@@ -102,33 +110,6 @@ in
         };
       };
     };
-
-    createApplicationsSymlinks = mkOption {
-      type = types.bool;
-      default = true;
-      description = ''
-        Whether to create symlinks in /Applications for kanata and kanata-vk-agent.
-        Set to false if using home-manager module which creates symlinks in ~/Applications.
-      '';
-    };
-
-    kanataPath = mkOption {
-      type = types.str;
-      default = "/Applications/kanata";
-      description = ''
-        Path to the kanata binary for launchd services.
-        Set to ~/Applications/Home Manager Apps/kanata if using home-manager module.
-      '';
-    };
-
-    vkAgentPath = mkOption {
-      type = types.str;
-      default = "/Applications/kanata-vk-agent";
-      description = ''
-        Path to the kanata-vk-agent binary for launchd services.
-        Set to ~/Applications/Home Manager Apps/kanata-vk-agent if using home-manager module.
-      '';
-    };
   };
 
   config = mkIf cfg.enable {
@@ -145,15 +126,17 @@ in
         /Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager activate 2>/dev/null || true
       fi
 
-      ${optionalString cfg.createApplicationsSymlinks ''
-        # Create symlinks in /Applications for permission management
-        echo "Creating kanata symlink in /Applications..."
-        ln -sf ${cfg.package}/bin/kanata /Applications/kanata
+      # Create wrapper scripts in /Applications for permission management
+      # Using wrapper scripts instead of symlinks so the path stays stable
+      # even when the nix store path changes (avoids Input Monitoring permission issues)
+      echo "Creating kanata wrapper in /Applications..."
+      cp -f ${kanataWrapper} /Applications/kanata
+      chmod +x /Applications/kanata
 
-        ${optionalString (lib.any (kb: kb.vkAgent.enable) (attrValues cfg.keyboards)) ''
-          echo "Creating kanata-vk-agent symlink in /Applications..."
-          ln -sf ${cfg.vkAgentPackage}/bin/kanata-vk-agent /Applications/kanata-vk-agent
-        ''}
+      ${optionalString (lib.any (kb: kb.vkAgent.enable) (attrValues cfg.keyboards)) ''
+        echo "Creating kanata-vk-agent wrapper in /Applications..."
+        cp -f ${vkAgentWrapper} /Applications/kanata-vk-agent
+        chmod +x /Applications/kanata-vk-agent
       ''}
 
       # Bootstrap and restart kanata services
@@ -192,7 +175,7 @@ in
         serviceConfig = {
           Label = "com.github.jtroo.kanata.${name}";
           ProgramArguments = [
-            cfg.kanataPath
+            "/Applications/kanata"
             "--cfg"
             (toString kb.configFile)
             "--port"
@@ -216,7 +199,7 @@ in
               serviceConfig = {
                 Label = "com.devsunb.kanata-vk-agent.${name}";
                 ProgramArguments = [
-                  cfg.vkAgentPath
+                  "/Applications/kanata-vk-agent"
                   "-p"
                   (toString kb.port)
                 ]
