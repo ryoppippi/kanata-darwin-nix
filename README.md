@@ -363,6 +363,63 @@ in
 
 When using the overlay, packages are available as `pkgs.kanata`, `pkgs.kanata-vk-agent`, and `pkgs.karabiner-driverkit`.
 
+## Config Validation
+
+This flake provides a `lib.checkKanataConfig` function to validate your Kanata configuration files. You can integrate this into your flake's checks to catch configuration errors in CI.
+
+### Usage
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    kanata-darwin-nix.url = "github:ryoppippi/kanata-darwin-nix";
+  };
+
+  outputs = { nixpkgs, kanata-darwin-nix, ... }:
+    let
+      systems = [ "x86_64-darwin" "aarch64-darwin" ];
+      forAllSystems = nixpkgs.lib.genAttrs systems;
+    in
+    {
+      checks = forAllSystems (system: {
+        kanata-config = kanata-darwin-nix.lib.checkKanataConfig {
+          pkgs = nixpkgs.legacyPackages.${system};
+          configFile = ./kanata.kbd;
+        };
+      });
+    };
+}
+```
+
+### Options
+
+| Option          | Type    | Required | Description                                        |
+| --------------- | ------- | -------- | -------------------------------------------------- |
+| `pkgs`          | pkgs    | Yes      | Nixpkgs instance                                   |
+| `configFile`    | path    | Yes      | Path to the `.kbd` config file                     |
+| `name`          | string  | No       | Derivation name (default: `"kanata-config"`)       |
+| `kanataPackage` | package | No       | Custom kanata package (default: from this overlay) |
+
+### Multiple Config Files
+
+```nix
+checks = forAllSystems (system: {
+  kanata-macbook = kanata-darwin-nix.lib.checkKanataConfig {
+    pkgs = nixpkgs.legacyPackages.${system};
+    configFile = ./keyboards/macbook.kbd;
+    name = "kanata-macbook";
+  };
+  kanata-hhkb = kanata-darwin-nix.lib.checkKanataConfig {
+    pkgs = nixpkgs.legacyPackages.${system};
+    configFile = ./keyboards/hhkb.kbd;
+    name = "kanata-hhkb";
+  };
+});
+```
+
+Run `nix flake check` to validate all configuration files.
+
 ## How It Works
 
 1. The `update.ts` script fetches the latest releases from GitHub API for all packages:

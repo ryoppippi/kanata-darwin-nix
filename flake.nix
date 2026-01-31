@@ -41,5 +41,37 @@
         default = self.darwinModules.kanata;
         kanata = ./modules/darwin;
       };
+
+      lib = {
+        checkKanataConfig =
+          {
+            pkgs,
+            configFile,
+            name ? "kanata-config",
+            kanataPackage ? self.packages.${pkgs.system}.kanata,
+          }:
+          pkgs.runCommand name
+            {
+              nativeBuildInputs = [ kanataPackage ];
+            }
+            ''
+              kanata --check --cfg ${configFile}
+              touch $out
+            '';
+      };
+
+      checks = forDarwinSystems (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+        in
+        {
+          kanata-config-basic = self.lib.checkKanataConfig {
+            inherit pkgs;
+            configFile = ./tests/basic.kbd;
+            name = "kanata-config-basic";
+          };
+        }
+      );
     };
 }

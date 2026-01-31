@@ -8,7 +8,7 @@ This repository provides a Nix flake for [Kanata](https://github.com/jtroo/kanat
 
 ```
 kanata-darwin-nix/
-├── flake.nix              # Main flake with overlay and darwinModules
+├── flake.nix              # Main flake with overlay, darwinModules, lib, and checks
 ├── flake.lock             # Locked dependencies
 ├── packages/
 │   ├── kanata/
@@ -26,13 +26,15 @@ kanata-darwin-nix/
 ├── modules/
 │   └── darwin/
 │       └── default.nix    # nix-darwin module for service management
+├── tests/
+│   └── basic.kbd          # Test kanata config for CI validation
 ├── update.ts              # Update script (Bun/TypeScript with Nix shebang)
 ├── dev/
 │   └── flake.nix          # Development tools (formatters, linters)
 ├── .github/
 │   ├── workflows/
 │   │   ├── update.yaml    # Automated updates (daily)
-│   │   └── check.yaml     # CI validation
+│   │   └── check.yaml     # CI validation (includes config validation)
 │   └── actions/
 │       └── setup-nix/     # Reusable Nix setup action
 ├── README.md              # User documentation
@@ -63,6 +65,23 @@ Downloads `.pkg` installer from [pqrs-org/Karabiner-DriverKit-VirtualHIDDevice](
 
 - **Platforms**: x86_64-darwin, aarch64-darwin
 - **Purpose**: Virtual HID device driver required for Kanata on macOS
+
+## Library Functions
+
+### lib.checkKanataConfig
+
+Validates Kanata configuration files using `kanata --check`. Returns a derivation that succeeds if the config is valid.
+
+```nix
+kanata-overlay.lib.checkKanataConfig {
+  pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+  configFile = ./kanata.kbd;
+  name = "my-kanata-config";  # optional
+  kanataPackage = pkgs.kanata;  # optional, uses overlay's kanata by default
+}
+```
+
+Used in flake checks to validate configs in CI.
 
 ## nix-darwin Module
 
@@ -132,6 +151,10 @@ cd dev && nix fmt
 ### Running Checks
 
 ```bash
+# Run config validation and package checks
+nix flake check -L
+
+# Run dev checks (formatting, linting)
 cd dev && nix flake check -L
 ```
 
@@ -143,7 +166,7 @@ cd dev && nix flake check -L
 ## GitHub Actions
 
 - **update.yaml**: Runs daily to check for new releases of all packages
-- **check.yaml**: Runs on PRs and pushes to validate formatting and build (macOS only)
+- **check.yaml**: Runs on PRs and pushes to validate formatting, build, and config validation (macOS only)
 
 ## Notes for Development
 

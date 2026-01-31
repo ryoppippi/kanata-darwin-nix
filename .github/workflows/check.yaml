@@ -40,3 +40,5 @@ jobs:
             exit 1
           fi
           echo "Version check passed: $version"
+      - name: Run flake checks (config validation)
+        run: nix flake check -L
