@@ -19,10 +19,7 @@ jobs:
         run: cd dev && nix flake check -L
 
   build-and-test:
-    strategy:
-      matrix:
-        os: [macos-latest, macos-13]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-nix
