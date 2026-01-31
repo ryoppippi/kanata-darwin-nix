@@ -53,6 +53,6 @@ stdenv.mkDerivation {
       "x86_64-darwin"
       "aarch64-darwin"
     ];
-    maintainers = [ ];
+    maintainers = with maintainers; [ ryoppippi ];
   };
 }

@@ -7,7 +7,7 @@ on:
 
 jobs:
   fmt-check:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-nix
@@ -21,11 +21,7 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            system: x86_64-linux
-          - os: macos-latest
-            system: aarch64-darwin
+        os: [macos-latest, macos-13]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -34,11 +30,9 @@ jobs:
           cachix-auth-token: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Build kanata
         run: nix build .#kanata -L
-      - name: Build kanata-vk-agent (macOS only)
-        if: runner.os == 'macOS'
+      - name: Build kanata-vk-agent
         run: nix build .#kanata-vk-agent -L
-      - name: Build karabiner-driverkit (macOS only)
-        if: runner.os == 'macOS'
+      - name: Build karabiner-driverkit
         run: nix build .#karabiner-driverkit -L
       - name: Check version
         run: |

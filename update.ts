@@ -4,10 +4,10 @@
 */
 
 /**
- * Update script for kanata-overlay packages.
+ * Update script for kanata-darwin-nix packages.
  *
  * Updates:
- * - kanata: from jtroo/kanata releases
+ * - kanata: from jtroo/kanata releases (macOS only)
  * - kanata-vk-agent: from devsunb/kanata-vk-agent releases
  * - karabiner-driverkit: from pqrs-org/Karabiner-DriverKit-VirtualHIDDevice releases
  */
@@ -49,7 +49,6 @@ async function prefetchUrl(url: string): Promise<string> {
 async function updateKanata() {
   const REPO = "jtroo/kanata";
   const platforms = {
-    "x86_64-linux": "kanata-linux-binaries-VERSION-x64.zip",
     "x86_64-darwin": "kanata-macos-binaries-x64-VERSION.zip",
     "aarch64-darwin": "kanata-macos-binaries-arm64-VERSION.zip",
   } as const;
@@ -201,7 +200,7 @@ async function updateKarabinerDriverKit() {
 }
 
 // ============== Main ==============
-console.log("Updating kanata-overlay packages...\n");
+console.log("Updating kanata-darwin-nix packages...\n");
 
 await updateKanata();
 console.log();

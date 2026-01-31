@@ -3,7 +3,6 @@
   stdenv,
   fetchurl,
   unzip,
-  autoPatchelfHook,
 }:
 let
   sourcesData = lib.importJSON ./sources.json;
@@ -16,7 +15,6 @@ let
 
   binaryName =
     {
-      "x86_64-linux" = "kanata_linux_x64";
       "x86_64-darwin" = "kanata_macos_cmd_allowed";
       "aarch64-darwin" = "kanata_macos_cmd_allowed_arm64";
     }
@@ -30,11 +28,7 @@ stdenv.mkDerivation rec {
     inherit (source) url hash;
   };
 
-  nativeBuildInputs = [ unzip ] ++ lib.optionals stdenv.hostPlatform.isLinux [ autoPatchelfHook ];
-
-  buildInputs = lib.optionals stdenv.hostPlatform.isLinux [
-    stdenv.cc.cc.lib
-  ];
+  nativeBuildInputs = [ unzip ];
 
   unpackPhase = ''
     runHook preUnpack
@@ -76,10 +70,9 @@ stdenv.mkDerivation rec {
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
     mainProgram = "kanata";
     platforms = [
-      "x86_64-linux"
       "x86_64-darwin"
       "aarch64-darwin"
     ];
-    maintainers = [ ];
+    maintainers = with maintainers; [ ryoppippi ];
   };
 }

@@ -1,20 +1,21 @@
-# Kanata Overlay
+# Kanata Darwin Nix
 
-A Nix flake overlay that provides pre-built [Kanata](https://github.com/jtroo/kanata) binaries and related tools from official GitHub releases.
+A Nix flake that provides [Kanata](https://github.com/jtroo/kanata) pre-built binaries, related tools, and a nix-darwin module for macOS.
 
 Kanata is a cross-platform software keyboard remapper that improves keyboard comfort and usability with advanced customisation.
+
+> **Note for Linux users**: This flake is macOS-only. For Linux, use the [kanata package from nixpkgs](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/by-name/ka/kanata/package.nix) instead.
 
 ## Features
 
 - Automatic updates via GitHub Actions (daily)
-- Multi-platform support: Linux (x86_64) and macOS (x86_64, aarch64)
+- macOS support (x86_64, aarch64)
 - Direct downloads from official GitHub releases
 - SHA256 checksum verification
-- Flake and non-flake support
 - Binary cache via [Cachix](https://app.cachix.org/cache/ryoppippi) for faster builds
-- **nix-darwin module** for automatic service management on macOS
-- **kanata-vk-agent** for app-specific key mappings (macOS)
-- **Karabiner-DriverKit** virtual HID device driver (macOS)
+- **nix-darwin module** for automatic service management
+- **kanata-vk-agent** for app-specific key mappings
+- **Karabiner-DriverKit** virtual HID device driver
 
 ## Why Use This Overlay?
 
@@ -93,10 +94,10 @@ Try Kanata without installation:
 
 ```bash
 # Run Kanata directly
-nix run github:ryoppippi/kanata-overlay -- --version
+nix run github:ryoppippi/kanata-darwin-nix -- --version
 
 # Or enter a shell with Kanata available
-nix shell github:ryoppippi/kanata-overlay
+nix shell github:ryoppippi/kanata-darwin-nix
 kanata --version
 ```
 
@@ -109,35 +110,12 @@ Add the overlay to your flake inputs:
 ```nix
 {
   inputs = {
-    kanata-overlay.url = "github:ryoppippi/kanata-overlay";
+    kanata-darwin-nix.url = "github:ryoppippi/kanata-darwin-nix";
   };
 }
 ```
 
 Then use `pkgs.kanata` in your configuration after adding the overlay to your `pkgs`.
-
-#### Add to NixOS
-
-```nix
-{
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    kanata-overlay.url = "github:ryoppippi/kanata-overlay";
-  };
-
-  outputs = { nixpkgs, kanata-overlay, ... }: {
-    nixosConfigurations.yourhostname = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        ({ pkgs, ... }: {
-          nixpkgs.overlays = [ kanata-overlay.overlays.default ];
-          environment.systemPackages = [ pkgs.kanata ];
-        })
-      ];
-    };
-  };
-}
-```
 
 #### Add to nix-darwin (Simple)
 
@@ -146,15 +124,15 @@ Then use `pkgs.kanata` in your configuration after adding the overlay to your `p
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nix-darwin.url = "github:LnL7/nix-darwin";
-    kanata-overlay.url = "github:ryoppippi/kanata-overlay";
+    kanata-darwin-nix.url = "github:ryoppippi/kanata-darwin-nix";
   };
 
-  outputs = { nixpkgs, nix-darwin, kanata-overlay, ... }: {
+  outputs = { nixpkgs, nix-darwin, kanata-darwin-nix, ... }: {
     darwinConfigurations.yourhostname = nix-darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       modules = [
         ({ pkgs, ... }: {
-          nixpkgs.overlays = [ kanata-overlay.overlays.default ];
+          nixpkgs.overlays = [ kanata-darwin-nix.overlays.default ];
           environment.systemPackages = [ pkgs.kanata ];
         })
       ];
@@ -177,16 +155,16 @@ This overlay provides a nix-darwin module that automatically manages Kanata as a
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nix-darwin.url = "github:LnL7/nix-darwin";
-    kanata-overlay.url = "github:ryoppippi/kanata-overlay";
+    kanata-darwin-nix.url = "github:ryoppippi/kanata-darwin-nix";
   };
 
-  outputs = { nixpkgs, nix-darwin, kanata-overlay, ... }: {
+  outputs = { nixpkgs, nix-darwin, kanata-darwin-nix, ... }: {
     darwinConfigurations.yourhostname = nix-darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       modules = [
-        kanata-overlay.darwinModules.default
+        kanata-darwin-nix.darwinModules.default
         ({ pkgs, ... }: {
-          nixpkgs.overlays = [ kanata-overlay.overlays.default ];
+          nixpkgs.overlays = [ kanata-darwin-nix.overlays.default ];
 
           services.kanata = {
             enable = true;
@@ -270,12 +248,12 @@ Use Kanata in a project-specific development environment.
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    kanata-overlay.url = "github:ryoppippi/kanata-overlay";
+    kanata-darwin-nix.url = "github:ryoppippi/kanata-darwin-nix";
   };
 
-  outputs = { nixpkgs, kanata-overlay, ... }:
+  outputs = { nixpkgs, kanata-darwin-nix, ... }:
     let
-      systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      systems = [ "x86_64-darwin" "aarch64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
     in
     {
@@ -286,7 +264,7 @@ Use Kanata in a project-specific development environment.
         {
           default = pkgs.mkShell {
             packages = [
-              kanata-overlay.packages.${system}.default
+              kanata-darwin-nix.packages.${system}.default
             ];
           };
         }
@@ -301,12 +279,12 @@ Use Kanata in a project-specific development environment.
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    kanata-overlay.url = "github:ryoppippi/kanata-overlay";
+    kanata-darwin-nix.url = "github:ryoppippi/kanata-darwin-nix";
   };
 
-  outputs = { nixpkgs, kanata-overlay, ... }:
+  outputs = { nixpkgs, kanata-darwin-nix, ... }:
     let
-      systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      systems = [ "x86_64-darwin" "aarch64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
     in
     {
@@ -314,7 +292,7 @@ Use Kanata in a project-specific development environment.
         let
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ kanata-overlay.overlays.default ];
+            overlays = [ kanata-darwin-nix.overlays.default ];
           };
         in
         {
@@ -334,14 +312,14 @@ Use Kanata in a project-specific development environment.
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager.url = "github:nix-community/home-manager";
-    kanata-overlay.url = "github:ryoppippi/kanata-overlay";
+    kanata-darwin-nix.url = "github:ryoppippi/kanata-darwin-nix";
   };
 
-  outputs = { nixpkgs, home-manager, kanata-overlay, ... }: {
+  outputs = { nixpkgs, home-manager, kanata-darwin-nix, ... }: {
     homeConfigurations."user@hostname" = home-manager.lib.homeManagerConfiguration {
       pkgs = import nixpkgs {
         system = "aarch64-darwin";
-        overlays = [ kanata-overlay.overlays.default ];
+        overlays = [ kanata-darwin-nix.overlays.default ];
       };
       modules = [{
         home.packages = [ pkgs.kanata ];
@@ -355,11 +333,11 @@ Use Kanata in a project-specific development environment.
 
 ```nix
 let
-  kanata-overlay = import (builtins.fetchTarball {
-    url = "https://github.com/ryoppippi/kanata-overlay/archive/main.tar.gz";
+  kanata-darwin-nix = import (builtins.fetchTarball {
+    url = "https://github.com/ryoppippi/kanata-darwin-nix/archive/main.tar.gz";
   });
   pkgs = import <nixpkgs> {
-    overlays = [ kanata-overlay.overlays.default ];
+    overlays = [ kanata-darwin-nix.overlays.default ];
   };
 in
   pkgs.kanata
@@ -367,11 +345,11 @@ in
 
 ## Available Packages
 
-| Package               | Platforms    | Description                                   |
-| --------------------- | ------------ | --------------------------------------------- |
-| `kanata`              | Linux, macOS | Kanata keyboard remapper                      |
-| `kanata-vk-agent`     | macOS only   | Virtual key agent for app-specific mappings   |
-| `karabiner-driverkit` | macOS only   | Karabiner-DriverKit virtual HID device driver |
+| Package               | Description                                   |
+| --------------------- | --------------------------------------------- |
+| `kanata`              | Kanata keyboard remapper (pre-built binary)   |
+| `kanata-vk-agent`     | Virtual key agent for app-specific mappings   |
+| `karabiner-driverkit` | Karabiner-DriverKit virtual HID device driver |
 
 When using the overlay, packages are available as `pkgs.kanata`, `pkgs.kanata-vk-agent`, and `pkgs.karabiner-driverkit`.
 
@@ -387,9 +365,10 @@ When using the overlay, packages are available as `pkgs.kanata`, `pkgs.kanata-vk
 
 ## Supported Platforms
 
-- `x86_64-linux`
 - `x86_64-darwin` (macOS Intel)
 - `aarch64-darwin` (macOS Apple Silicon)
+
+> **Linux users**: Use [nixpkgs kanata](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/by-name/ka/kanata/package.nix) instead.
 
 ## Development
 

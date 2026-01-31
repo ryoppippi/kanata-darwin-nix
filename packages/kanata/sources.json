@@ -1,10 +1,6 @@
 {
   "version": "1.10.1",
   "platforms": {
-    "x86_64-linux": {
-      "url": "https://github.com/jtroo/kanata/releases/download/v1.10.1/kanata-linux-binaries-v1.10.1-x64.zip",
-      "hash": "sha256-91WkvesmghiT75VHMts07ahF3OzUIcbwaotLKA6jijk="
-    },
     "x86_64-darwin": {
       "url": "https://github.com/jtroo/kanata/releases/download/v1.10.1/kanata-macos-binaries-x64-v1.10.1.zip",
       "hash": "sha256-DFftBfS3TQgyiRv8wQCL1eXCuHzI1sR+8oGve+IB5fw="

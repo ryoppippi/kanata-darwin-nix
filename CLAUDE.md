@@ -1,11 +1,13 @@
-# Kanata Overlay
+# Kanata Darwin Nix
 
-This repository provides a Nix flake overlay for [Kanata](https://github.com/jtroo/kanata) and related tools for macOS keyboard remapping.
+This repository provides a Nix flake for [Kanata](https://github.com/jtroo/kanata) and related tools for macOS keyboard remapping.
+
+> **Note**: This flake is macOS-only. For Linux, use [nixpkgs kanata](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/by-name/ka/kanata/package.nix).
 
 ## Repository Structure
 
 ```
-kanata-overlay/
+kanata-darwin-nix/
 ├── flake.nix              # Main flake with overlay and darwinModules
 ├── flake.lock             # Locked dependencies
 ├── packages/
@@ -44,7 +46,7 @@ kanata-overlay/
 
 Downloads pre-built binaries from [jtroo/kanata](https://github.com/jtroo/kanata) releases.
 
-- **Platforms**: x86_64-linux, x86_64-darwin, aarch64-darwin
+- **Platforms**: x86_64-darwin, aarch64-darwin
 - **macOS variant**: Uses `cmd_allowed` binary (required for command key remapping)
 - **sources.json** contains platform-specific URLs and SRI hashes
 
@@ -52,14 +54,14 @@ Downloads pre-built binaries from [jtroo/kanata](https://github.com/jtroo/kanata
 
 Downloads pre-built binaries from [devsunb/kanata-vk-agent](https://github.com/devsunb/kanata-vk-agent) releases.
 
-- **Platforms**: macOS only (x86_64-darwin, aarch64-darwin)
+- **Platforms**: x86_64-darwin, aarch64-darwin
 - **Purpose**: Enables app-specific key mappings via bundle ID blacklist
 
 ### karabiner-driverkit
 
 Downloads `.pkg` installer from [pqrs-org/Karabiner-DriverKit-VirtualHIDDevice](https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice) releases.
 
-- **Platforms**: macOS only (x86_64-darwin, aarch64-darwin)
+- **Platforms**: x86_64-darwin, aarch64-darwin
 - **Purpose**: Virtual HID device driver required for Kanata on macOS
 
 ## nix-darwin Module
@@ -132,23 +134,18 @@ cd dev && nix flake check -L
 
 ## Supported Platforms
 
-| Package             | x86_64-linux | x86_64-darwin | aarch64-darwin |
-| ------------------- | ------------ | ------------- | -------------- |
-| kanata              | ✓            | ✓             | ✓              |
-| kanata-vk-agent     | ✗            | ✓             | ✓              |
-| karabiner-driverkit | ✗            | ✓             | ✓              |
-
-Note: `aarch64-linux` is not supported because Kanata does not provide official binaries for that platform.
+- `x86_64-darwin` (macOS Intel)
+- `aarch64-darwin` (macOS Apple Silicon)
 
 ## GitHub Actions
 
 - **update.yaml**: Runs daily to check for new releases of all packages
-- **check.yaml**: Runs on PRs and pushes to validate formatting and build
+- **check.yaml**: Runs on PRs and pushes to validate formatting and build (macOS only)
 
 ## Notes for Development
 
 - The main flake has minimal dependencies (only nixpkgs)
 - Development tools are in `dev/flake.nix` to avoid polluting the main flake
-- On macOS, Kanata requires the Karabiner-DriverKit VirtualHIDDevice driver
+- Kanata on macOS requires the Karabiner-DriverKit VirtualHIDDevice driver
 - The nix-darwin module handles driver installation automatically
 - Input Monitoring permission must be granted manually via System Settings
