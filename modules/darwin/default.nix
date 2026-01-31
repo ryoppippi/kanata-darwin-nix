@@ -102,10 +102,33 @@ in
         };
       };
     };
+
+    validateConfig = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Validate kanata configuration files during activation";
+    };
   };
 
   config = mkIf cfg.enable {
     system.activationScripts.postActivation.text = ''
+      ${optionalString cfg.validateConfig ''
+        # Validate kanata configuration files
+        echo "🔍 Validating kanata configuration files..."
+        ${concatStringsSep "\n" (
+          lib.mapAttrsToList (name: kb: ''
+            echo "  Checking ${name}..."
+            if ${cfg.package}/bin/kanata --check --cfg ${toString kb.configFile} 2>&1; then
+              echo "  ✅ ${name} configuration valid"
+            else
+              echo "  ❌ ${name} configuration invalid" >&2
+              exit 1
+            fi
+          '') cfg.keyboards
+        )}
+        echo "✅ All kanata configurations valid"
+      ''}
+
       # Install Karabiner-DriverKit-VirtualHIDDevice if not already installed
       if ! /usr/sbin/pkgutil --pkg-info org.pqrs.Karabiner-DriverKit-VirtualHIDDevice >/dev/null 2>&1; then
         echo "Installing Karabiner-DriverKit-VirtualHIDDevice..."

@@ -224,19 +224,20 @@ services.kanata = {
 
 ##### Service Module Options
 
-| Option                                               | Type    | Description                         |
-| ---------------------------------------------------- | ------- | ----------------------------------- |
-| `services.kanata.enable`                             | bool    | Enable Kanata service               |
-| `services.kanata.package`                            | package | Kanata package to use               |
-| `services.kanata.vkAgentPackage`                     | package | kanata-vk-agent package             |
-| `services.kanata.karabinerDriverKitPackage`          | package | Karabiner-DriverKit package         |
-| `services.kanata.keyboards`                          | attrsOf | Keyboard configurations             |
-| `services.kanata.keyboards.<name>.configFile`        | path    | Path to `.kbd` config file          |
-| `services.kanata.keyboards.<name>.port`              | port    | TCP port for kanata                 |
-| `services.kanata.keyboards.<name>.extraArgs`         | list    | Extra arguments for kanata          |
-| `services.kanata.keyboards.<name>.vkAgent.enable`    | bool    | Enable vk-agent for this keyboard   |
-| `services.kanata.keyboards.<name>.vkAgent.blacklist` | list    | Bundle IDs to exclude from vk-agent |
-| `services.kanata.keyboards.<name>.vkAgent.extraArgs` | list    | Extra arguments for vk-agent        |
+| Option                                               | Type    | Description                                        |
+| ---------------------------------------------------- | ------- | -------------------------------------------------- |
+| `services.kanata.enable`                             | bool    | Enable Kanata service                              |
+| `services.kanata.package`                            | package | Kanata package to use                              |
+| `services.kanata.vkAgentPackage`                     | package | kanata-vk-agent package                            |
+| `services.kanata.karabinerDriverKitPackage`          | package | Karabiner-DriverKit package                        |
+| `services.kanata.keyboards`                          | attrsOf | Keyboard configurations                            |
+| `services.kanata.keyboards.<name>.configFile`        | path    | Path to `.kbd` config file                         |
+| `services.kanata.keyboards.<name>.port`              | port    | TCP port for kanata                                |
+| `services.kanata.keyboards.<name>.extraArgs`         | list    | Extra arguments for kanata                         |
+| `services.kanata.keyboards.<name>.vkAgent.enable`    | bool    | Enable vk-agent for this keyboard                  |
+| `services.kanata.keyboards.<name>.vkAgent.blacklist` | list    | Bundle IDs to exclude from vk-agent                |
+| `services.kanata.keyboards.<name>.vkAgent.extraArgs` | list    | Extra arguments for vk-agent                       |
+| `services.kanata.validateConfig`                     | bool    | Validate configs during activation (default: true) |
 
 ##### macOS Permissions
 

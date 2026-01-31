@@ -89,11 +89,12 @@ Located at `modules/darwin/default.nix`. Provides `services.kanata` options:
 
 ### What It Does
 
-1. **Installs Karabiner-DriverKit** via activation script (only if not already installed)
-2. **Activates the driver** via Karabiner-VirtualHIDDevice-Manager
-3. **Creates symlinks** in `/Applications` for Input Monitoring permissions
-4. **Configures launchd daemons** for each keyboard configuration
-5. **Configures launchd agents** for kanata-vk-agent (optional per keyboard)
+1. **Validates configuration files** via `kanata --check` (can be disabled with `validateConfig = false`)
+2. **Installs Karabiner-DriverKit** via activation script (only if not already installed)
+3. **Activates the driver** via Karabiner-VirtualHIDDevice-Manager
+4. **Creates symlinks** in `/Applications` for Input Monitoring permissions
+5. **Configures launchd daemons** for each keyboard configuration
+6. **Configures launchd agents** for kanata-vk-agent (optional per keyboard)
 
 ### Key Implementation Details
 
