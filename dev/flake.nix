@@ -67,7 +67,6 @@
           devShells.default = pkgs.mkShellNoCC {
             packages = [
               treefmtEval.config.build.wrapper
-              pkgs.bun
               pkgs.typos
               pkgs.typos-lsp
             ];
