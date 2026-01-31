@@ -38,7 +38,7 @@ While Kanata is available in nixpkgs, this flake provides several advantages for
 - **nix-darwin module**: Automatic launchd service management out of the box
 - **kanata-vk-agent**: App-specific key mappings (not in nixpkgs!)
 - **Karabiner-DriverKit**: Virtual HID driver installation handled automatically
-- **Input Monitoring**: Symlinks in `/Applications` for persistent permissions
+- **Input Monitoring**: Wrapper scripts in `/Applications` for persistent permissions
 
 ### 🎯 Simple Integration
 
@@ -154,7 +154,7 @@ Then use `pkgs.kanata` in your configuration after adding the overlay to your `p
 This overlay provides a nix-darwin module that automatically manages Kanata as a launchd service. It handles:
 
 - Installing the Karabiner-DriverKit virtual HID device driver
-- Creating symlinks in `/Applications` for Input Monitoring permissions
+- Creating wrapper scripts in `/Applications` for Input Monitoring permissions
 - Running Kanata as a launchd daemon
 - Optionally running kanata-vk-agent for app-specific key mappings
 
@@ -405,11 +405,12 @@ This automatically installs git pre-commit hooks that run:
 - **nixfmt-rfc-style** - Nix code formatter (RFC 166)
 - **deadnix** - Dead code detection
 - **statix** - Nix linter
+- **typos** - Spell checker
 
 ### Update sources manually
 
 ```bash
-bun ./update.ts
+./update.ts
 ```
 
 ### Test the overlay

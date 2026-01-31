@@ -72,7 +72,7 @@ Located at `modules/darwin/default.nix`. Provides `services.kanata` options:
 
 1. **Installs Karabiner-DriverKit** via activation script (only if not already installed)
 2. **Activates the driver** via Karabiner-VirtualHIDDevice-Manager
-3. **Creates symlinks** in `/Applications` for Input Monitoring permissions
+3. **Creates wrapper scripts** in `/Applications` for Input Monitoring permissions
 4. **Configures launchd daemons** for each keyboard configuration
 5. **Configures launchd agents** for kanata-vk-agent (optional per keyboard)
 
@@ -80,7 +80,7 @@ Located at `modules/darwin/default.nix`. Provides `services.kanata` options:
 
 - Kanata runs as a **system daemon** (`launchd.daemons`)
 - kanata-vk-agent runs as a **user agent** (`launchd.agents`)
-- Uses `/Applications/kanata` symlink for Input Monitoring permission persistence
+- Uses `/Applications/kanata` wrapper script for Input Monitoring permission persistence
 - Logs stored at `/var/log/kanata-*.log` (daemon) and `/tmp/kanata-vk-agent-*.log` (agent)
 
 ## update.ts
@@ -93,6 +93,8 @@ TypeScript script with Nix shebang that updates all three packages:
 #! nix shell --inputs-from . nixpkgs#bun nixpkgs#oxfmt -c bun
 */
 ```
+
+Runs with Nix shebang - no need to install bun separately.
 
 ### Update Process
 
