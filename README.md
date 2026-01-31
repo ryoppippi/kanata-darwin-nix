@@ -211,6 +211,31 @@ This overlay provides a nix-darwin module that automatically manages Kanata as a
 }
 ```
 
+##### Multiple Keyboards
+
+You can configure multiple keyboards with different settings. Each keyboard gets its own launchd daemon:
+
+```nix
+services.kanata = {
+  enable = true;
+  keyboards = {
+    macbook = {
+      configFile = ./keyboards/macbook.kbd;
+      port = 5829;
+      vkAgent = {
+        enable = true;
+        blacklist = [ "com.hnc.Discord" ];
+      };
+    };
+    hhkb = {
+      configFile = ./keyboards/hhkb.kbd;
+      port = 5830;
+      vkAgent.enable = true;
+    };
+  };
+};
+```
+
 ##### Service Module Options
 
 | Option                                               | Type    | Description                         |
