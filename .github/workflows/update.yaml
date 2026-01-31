@@ -19,10 +19,12 @@ jobs:
       - run: "git config user.email 41898282+github-actions[bot]@users.noreply.github.com"
       - run: "git config user.name github-actions[bot]"
       - run: "git add -A"
-      - name: Commit with version
+      - name: Commit with versions
         run: |
           if ! git diff --staged --quiet; then
-            VERSION=$(jq -r '.version' packages/kanata/sources.json)
-            git commit -m "chore: update kanata to $VERSION"
+            KANATA_VERSION=$(jq -r '.version' packages/kanata/sources.json)
+            VK_AGENT_VERSION=$(jq -r '.version' packages/kanata-vk-agent/sources.json)
+            DRIVERKIT_VERSION=$(jq -r '.version' packages/karabiner-driverkit/sources.json)
+            git commit -m "chore: update packages (kanata $KANATA_VERSION, vk-agent $VK_AGENT_VERSION, driverkit $DRIVERKIT_VERSION)"
           fi
       - run: "git push -u origin main"
