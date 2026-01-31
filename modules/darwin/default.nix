@@ -134,7 +134,7 @@ in
         lib.mapAttrsToList (name: kb: ''
           /bin/launchctl bootstrap system /Library/LaunchDaemons/com.github.jtroo.kanata.${name}.plist 2>/dev/null || true
           ${optionalString kb.vkAgent.enable ''
-            /bin/launchctl bootstrap gui/$(id -u) /Library/LaunchAgents/com.devsunb.kanata-vk-agent.${name}.plist 2>/dev/null || true
+            /bin/launchctl bootstrap gui/"$(id -u)" /Library/LaunchAgents/com.devsunb.kanata-vk-agent.${name}.plist 2>/dev/null || true
           ''}
         '') cfg.keyboards
       )}
@@ -151,7 +151,7 @@ in
         lib.mapAttrsToList (
           name: kb:
           optionalString kb.vkAgent.enable ''
-            /bin/launchctl kickstart -k gui/$(id -u)/com.devsunb.kanata-vk-agent.${name} 2>/dev/null || true
+            /bin/launchctl kickstart -k gui/"$(id -u)"/com.devsunb.kanata-vk-agent.${name} 2>/dev/null || true
           ''
         ) cfg.keyboards
       )}
