@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   update-sources:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: write
     steps:
@@ -22,7 +22,7 @@ jobs:
       - name: Commit with version
         run: |
           if ! git diff --staged --quiet; then
-            VERSION=$(jq -r '.version' sources.json)
+            VERSION=$(jq -r '.version' packages/kanata/sources.json)
             git commit -m "chore: update kanata to $VERSION"
           fi
       - run: "git push -u origin main"
