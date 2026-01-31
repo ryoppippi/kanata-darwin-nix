@@ -16,7 +16,7 @@ let
 
   binaryName =
     {
-      "x86_64-linux" = "kanata";
+      "x86_64-linux" = "kanata_linux_x64";
       "x86_64-darwin" = "kanata_macos_cmd_allowed";
       "aarch64-darwin" = "kanata_macos_cmd_allowed_arm64";
     }
