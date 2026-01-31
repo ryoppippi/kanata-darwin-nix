@@ -64,12 +64,12 @@ Add to your Nix configuration:
 ```nix
 # NixOS (configuration.nix)
 nix.settings = {
-  substitutes = [ "https://ryoppippi.cachix.org" ];
+  substituters = [ "https://ryoppippi.cachix.org" ];
   trusted-public-keys = [ "ryoppippi.cachix.org-1:b2LbtWNvJeL/qb1B6TYOMK+apaCps4SCbzlPRfSQIms=" ];
 };
 
 # Or in ~/.config/nix/nix.conf
-# extra-substitutes = https://ryoppippi.cachix.org
+# extra-substituters = https://ryoppippi.cachix.org
 # extra-trusted-public-keys = ryoppippi.cachix.org-1:b2LbtWNvJeL/qb1B6TYOMK+apaCps4SCbzlPRfSQIms=
 ```
 
@@ -78,7 +78,7 @@ nix.settings = {
 ```nix
 {
   nixConfig = {
-    extra-substitutes = [ "https://ryoppippi.cachix.org" ];
+    extra-substituters = [ "https://ryoppippi.cachix.org" ];
     extra-trusted-public-keys = [ "ryoppippi.cachix.org-1:b2LbtWNvJeL/qb1B6TYOMK+apaCps4SCbzlPRfSQIms=" ];
   };
 
