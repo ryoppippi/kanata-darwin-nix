@@ -5,6 +5,7 @@
   unzip,
 }:
 let
+  platforms = import ../../platforms.nix;
   sourcesData = lib.importJSON ./sources.json;
   inherit (sourcesData) version;
   sources = sourcesData.platforms;
@@ -69,10 +70,7 @@ stdenv.mkDerivation rec {
     license = licenses.lgpl3Only;
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
     mainProgram = "kanata";
-    platforms = [
-      "x86_64-darwin"
-      "aarch64-darwin"
-    ];
+    inherit platforms;
     maintainers = with maintainers; [ ryoppippi ];
   };
 }

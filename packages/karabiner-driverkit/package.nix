@@ -3,6 +3,7 @@
   fetchurl,
 }:
 let
+  platforms = import ../../platforms.nix;
   sourcesData = lib.importJSON ./sources.json;
   inherit (sourcesData) version url hash;
 in
@@ -15,10 +16,7 @@ fetchurl {
     description = "Karabiner-DriverKit-VirtualHIDDevice for macOS";
     homepage = "https://github.com/pqrs-org/Karabiner-DriverKit-VirtualHIDDevice";
     license = licenses.publicDomain;
-    platforms = [
-      "x86_64-darwin"
-      "aarch64-darwin"
-    ];
+    inherit platforms;
     maintainers = with maintainers; [ ryoppippi ];
   };
 }

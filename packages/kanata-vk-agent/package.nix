@@ -5,6 +5,7 @@
   gnutar,
 }:
 let
+  platforms = import ../../platforms.nix;
   sourcesData = lib.importJSON ./sources.json;
   inherit (sourcesData) version;
   sources = sourcesData.platforms;
@@ -49,10 +50,7 @@ stdenv.mkDerivation {
     license = licenses.mit;
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
     mainProgram = "kanata-vk-agent";
-    platforms = [
-      "x86_64-darwin"
-      "aarch64-darwin"
-    ];
+    inherit platforms;
     maintainers = with maintainers; [ ryoppippi ];
   };
 }

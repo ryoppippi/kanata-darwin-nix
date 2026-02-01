@@ -11,10 +11,7 @@
       nixpkgs,
     }:
     let
-      darwinSystems = [
-        "aarch64-darwin"
-        "x86_64-darwin"
-      ];
+      darwinSystems = import ./platforms.nix;
       forDarwinSystems = nixpkgs.lib.genAttrs darwinSystems;
     in
     {
