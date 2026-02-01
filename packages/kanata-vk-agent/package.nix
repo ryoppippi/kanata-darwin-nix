@@ -1,7 +1,8 @@
 {
   lib,
   stdenv,
-  fetchzip,
+  fetchurl,
+  gnutar,
 }:
 let
   platforms = import ../../platforms.nix;
@@ -17,17 +18,28 @@ stdenv.mkDerivation {
   pname = "kanata-vk-agent";
   inherit version;
 
-  src = fetchzip {
+  src = fetchurl {
     inherit (source) url hash;
-    stripRoot = false;
   };
+
+  sourceRoot = ".";
+
+  nativeBuildInputs = [ gnutar ];
 
   dontConfigure = true;
   dontBuild = true;
 
+  unpackPhase = ''
+    runHook preUnpack
+    tar -xzf $src
+    runHook postUnpack
+  '';
+
   installPhase = ''
     runHook preInstall
-    install -Dm755 $src/kanata-vk-agent $out/bin/kanata-vk-agent
+    mkdir -p $out/bin
+    cp kanata-vk-agent $out/bin/
+    chmod +x $out/bin/kanata-vk-agent
     runHook postInstall
   '';
 

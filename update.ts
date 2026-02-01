@@ -45,11 +45,6 @@ async function prefetchUrl(url: string): Promise<string> {
   return sha256ToSri(result.trim());
 }
 
-async function prefetchUrlUnpack(url: string): Promise<string> {
-  const result = await $`nix-prefetch-url --unpack --type sha256 ${url}`.text();
-  return sha256ToSri(result.trim());
-}
-
 // ============== Kanata ==============
 async function updateKanata() {
   const REPO = "jtroo/kanata";
@@ -80,6 +75,16 @@ async function updateKanata() {
 
   console.log(`[kanata] Updating to ${latestVersion}...`);
 
+  // Fetch sha256sums
+  const sha256sumsUrl = `https://github.com/${REPO}/releases/download/v${latestVersion}/sha256sums`;
+  const sha256sumsResponse = await fetch(sha256sumsUrl);
+  const sha256sumsText = await sha256sumsResponse.text();
+  const checksums = new Map<string, string>();
+  for (const line of sha256sumsText.trim().split("\n")) {
+    const [hash, filename] = line.trim().split(/\s+/);
+    if (hash && filename) checksums.set(filename, hash);
+  }
+
   const platformsData: Record<NixPlatform, { url: string; hash: string }> = {} as Record<
     NixPlatform,
     { url: string; hash: string }
@@ -87,10 +92,15 @@ async function updateKanata() {
 
   for (const nixPlatform of Object.keys(platforms) as NixPlatform[]) {
     const filename = platforms[nixPlatform].replace("VERSION", `v${latestVersion}`);
+    const checksum = checksums.get(filename);
+    if (!checksum) {
+      console.error(`[kanata] Checksum not found for ${filename}`);
+      process.exit(1);
+    }
+    const sriHash = await sha256ToSri(checksum);
     const url = `https://github.com/${REPO}/releases/download/v${latestVersion}/${filename}`;
-    const hash = await prefetchUrlUnpack(url);
-    platformsData[nixPlatform] = { url, hash };
-    console.log(`  ${nixPlatform}: ${hash}`);
+    platformsData[nixPlatform] = { url, hash: sriHash };
+    console.log(`  ${nixPlatform}: ${sriHash}`);
   }
 
   const sourcesData: SourcesJSON = { version: latestVersion, platforms: platformsData };
@@ -136,7 +146,7 @@ async function updateKanataVkAgent() {
   for (const nixPlatform of Object.keys(platforms) as NixPlatform[]) {
     const filename = platforms[nixPlatform];
     const url = `https://github.com/${REPO}/releases/download/v${latestVersion}/${filename}`;
-    const hash = await prefetchUrlUnpack(url);
+    const hash = await prefetchUrl(url);
     platformsData[nixPlatform] = { url, hash };
     console.log(`  ${nixPlatform}: ${hash}`);
   }

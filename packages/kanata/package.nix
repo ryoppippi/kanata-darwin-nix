@@ -1,7 +1,8 @@
 {
   lib,
   stdenv,
-  fetchzip,
+  fetchurl,
+  unzip,
 }:
 let
   platforms = import ../../platforms.nix;
@@ -20,22 +21,26 @@ let
     }
     .${stdenv.hostPlatform.system};
 in
-stdenv.mkDerivation {
+stdenv.mkDerivation rec {
   pname = "kanata";
   inherit version;
 
-  src = fetchzip {
+  src = fetchurl {
     inherit (source) url hash;
-    stripRoot = false;
   };
 
-  dontConfigure = true;
-  dontBuild = true;
+  nativeBuildInputs = [ unzip ];
+
+  unpackPhase = ''
+    runHook preUnpack
+    unzip $src
+    runHook postUnpack
+  '';
 
   installPhase = ''
     runHook preInstall
 
-    install -Dm755 $src/${binaryName} $out/bin/kanata
+    install -Dm755 ${binaryName} $out/bin/kanata
 
     runHook postInstall
   '';
