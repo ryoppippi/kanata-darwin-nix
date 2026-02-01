@@ -3,11 +3,11 @@
   "platforms": {
     "x86_64-darwin": {
       "url": "https://github.com/jtroo/kanata/releases/download/v1.10.1/kanata-macos-binaries-x64-v1.10.1.zip",
-      "hash": "sha256-DFftBfS3TQgyiRv8wQCL1eXCuHzI1sR+8oGve+IB5fw="
+      "hash": "sha256-94FQ4GGq12fpdUvH7EEoGQGaYTBaS3sRiAea1LKFs2g="
     },
     "aarch64-darwin": {
       "url": "https://github.com/jtroo/kanata/releases/download/v1.10.1/kanata-macos-binaries-arm64-v1.10.1.zip",
-      "hash": "sha256-K5odASyD5ikS9xnzvi0i8sw9Y8bg7wJb+YDk1Cfhywk="
+      "hash": "sha256-4gg2sruylr5IdZtANJ1e/AfxbFTRDXKs6e8orls1tkc="
     }
   }
 }

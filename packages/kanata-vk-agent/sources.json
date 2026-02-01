@@ -3,11 +3,11 @@
   "platforms": {
     "x86_64-darwin": {
       "url": "https://github.com/devsunb/kanata-vk-agent/releases/download/v0.1.0/kanata-vk-agent_x86_64.tar.gz",
-      "hash": "sha256-jGKKGbYXIEYv1WIPsn0oH+jvni9yBl/EacYCiucHtOQ="
+      "hash": "sha256-5tggCigXauTqpUzE7HFIfUJy9iz49x5UDXQkwCr9BHU="
     },
     "aarch64-darwin": {
       "url": "https://github.com/devsunb/kanata-vk-agent/releases/download/v0.1.0/kanata-vk-agent_aarch64.tar.gz",
-      "hash": "sha256-Vum45YJVLOL+Bar9/vFWbDWzsoNlCjbpiuGOeTr1pYk="
+      "hash": "sha256-5ldz6lDoGop7QOKxaKrQuECuJmeaPzz/Hpuh1qNW7Sk="
     }
   }
 }
