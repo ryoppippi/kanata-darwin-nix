@@ -38,7 +38,7 @@ While Kanata is available in nixpkgs, this flake provides several advantages for
 - **nix-darwin module**: Automatic launchd service management out of the box
 - **kanata-vk-agent**: App-specific key mappings (not in nixpkgs!)
 - **Karabiner-DriverKit**: Virtual HID driver installation handled automatically
-- **Input Monitoring**: Symlinks in `/Applications` for permissions management
+- **Input Monitoring**: Binaries copied to `/Applications` for permissions management
 
 ### 🎯 Simple Integration
 
@@ -154,7 +154,7 @@ Then use `pkgs.kanata` in your configuration after adding the overlay to your `p
 This overlay provides a nix-darwin module that automatically manages Kanata as a launchd service. It handles:
 
 - Installing the Karabiner-DriverKit virtual HID device driver
-- Creating symlinks in `/Applications` for Input Monitoring permissions
+- Copying binaries to `/Applications` for Input Monitoring permissions
 - Running Kanata as a launchd daemon
 - Optionally running kanata-vk-agent for app-specific key mappings
 
@@ -247,7 +247,7 @@ After enabling the service, you need to grant Input Monitoring permission:
 2. Add `/Applications/kanata`
 3. If using vk-agent, also add `/Applications/kanata-vk-agent`
 
-> **Note**: When kanata is updated, the nix store path changes and the symlink target changes. You may need to remove and re-add `/Applications/kanata` in Input Monitoring settings after updates.
+> **Note**: The binaries are copied to `/Applications` (not symlinked) because macOS Input Monitoring doesn't work properly with symlinks to the nix store. After major updates, you may need to re-grant Input Monitoring permission.
 
 #### Add to devShell
 

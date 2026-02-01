@@ -92,7 +92,7 @@ Located at `modules/darwin/default.nix`. Provides `services.kanata` options:
 1. **Validates configuration files** via `kanata --check` (can be disabled with `validateConfig = false`)
 2. **Installs Karabiner-DriverKit** via activation script (only if not already installed)
 3. **Activates the driver** via Karabiner-VirtualHIDDevice-Manager
-4. **Creates symlinks** in `/Applications` for Input Monitoring permissions
+4. **Copies binaries** to `/Applications` for Input Monitoring permissions (symlinks don't work)
 5. **Configures launchd daemons** for each keyboard configuration
 6. **Configures launchd agents** for kanata-vk-agent (optional per keyboard)
 
@@ -100,8 +100,8 @@ Located at `modules/darwin/default.nix`. Provides `services.kanata` options:
 
 - Kanata runs as a **system daemon** (`launchd.daemons`)
 - kanata-vk-agent runs as a **user agent** (`launchd.agents`)
-- Uses `/Applications/kanata` symlink for Input Monitoring permissions
-- **Note**: When kanata updates, the nix store path changes and Input Monitoring permission must be re-granted
+- Copies binaries to `/Applications/kanata` for Input Monitoring permissions (symlinks to nix store don't work with macOS Input Monitoring)
+- **Note**: After major updates, Input Monitoring permission may need to be re-granted
 - Logs stored at `/var/log/kanata-*.log` (daemon) and `/tmp/kanata-vk-agent-*.log` (agent)
 
 ## update.ts

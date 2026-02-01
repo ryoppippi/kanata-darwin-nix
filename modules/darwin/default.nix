@@ -141,13 +141,18 @@ in
         /Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager activate 2>/dev/null || true
       fi
 
-      # Create symlinks in /Applications for permission management
+      # Copy binaries to /Applications for Input Monitoring permission
+      # (macOS Input Monitoring doesn't work properly with symlinks to nix store)
       echo "Creating kanata symlink in /Applications..."
-      ln -sf ${cfg.package}/bin/kanata /Applications/kanata
+      rm -f /Applications/kanata
+      cp ${cfg.package}/bin/kanata /Applications/kanata
+      chmod +x /Applications/kanata
 
       ${optionalString (lib.any (kb: kb.vkAgent.enable) (attrValues cfg.keyboards)) ''
         echo "Creating kanata-vk-agent symlink in /Applications..."
-        ln -sf ${cfg.vkAgentPackage}/bin/kanata-vk-agent /Applications/kanata-vk-agent
+        rm -f /Applications/kanata-vk-agent
+        cp ${cfg.vkAgentPackage}/bin/kanata-vk-agent /Applications/kanata-vk-agent
+        chmod +x /Applications/kanata-vk-agent
       ''}
 
       # Bootstrap and restart kanata services
