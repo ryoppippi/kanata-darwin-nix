@@ -38,7 +38,7 @@ kanata-darwin-nix/
 │   └── actions/
 │       └── setup-nix/     # Reusable Nix setup action
 ├── README.md              # User documentation
-├── CLAUDE.md              # This file
+├── AGENTS.md              # This file
 └── LICENSE                # MIT licence
 ```
 
