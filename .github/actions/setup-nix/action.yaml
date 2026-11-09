@@ -1,22 +1,14 @@
 name: "Setup Nix"
-description: "Install Nix and configure Cachix"
-inputs:
-  cachix-auth-token:
-    description: "Cachix authentication token"
-    required: false
+description: "Install Nix and restore the Nix store cache"
 runs:
   using: "composite"
   steps:
     - name: Install Nix
-      uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15 # v31.9.0
+      uses: nixbuild/nix-quick-install-action@9f63be77f412a248c9d9a65a4c82cf066cdf8f0c # v35
       with:
         github_access_token: ${{ github.token }}
-
-    - name: Setup Cachix (ryoppippi)
-      uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
-      with:
-        name: ryoppippi
-        authToken: ${{ inputs.cachix-auth-token }}
+        nix_conf: |
+          max-jobs = auto
 
     - name: Cache Nix store
       uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
