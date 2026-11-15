@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   fmt-check:
     runs-on: ubuntu-24.04-arm
